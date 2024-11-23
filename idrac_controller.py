@@ -7,9 +7,7 @@ from typing import Optional, Tuple
 import re
 
 import pyipmi
-from pyipmi.bmc import LanBMC
-from pyipmi import interfaces
-
+import pyipmi.interfaces
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
