@@ -3,7 +3,7 @@ import time
 import signal
 import sys
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional
 import re
 
 import pyipmi
@@ -33,7 +33,7 @@ class DellServer:
         self.is_gen14_or_newer = self._check_server_generation()
         self.current_profile = "Initializing..."
         
-    def _setup_ipmi(self) -> pyipmi.Interface:
+    def _setup_ipmi(self) -> pyipmi.Ipmi:
         interface = pyipmi.interfaces.create_interface(
             interface='ipmitool',
             interface_type='lanplus'
@@ -52,7 +52,7 @@ class DellServer:
         
         return ipmi
 
-    def _get_server_info(self) -> Tuple[str, str]:
+    def _get_server_info(self) -> tuple[str, str]:
         fru = self.ipmi.get_fru_inventory()
         return fru.board_product_name, fru.board_manufacturer
 
