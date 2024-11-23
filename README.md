@@ -1,13 +1,12 @@
 <div id="top"></div>
+This version of the container uses python to control ipmi, via `python-ipmi`.
 
-> **Warning** If you update to the latest version, be sure to replace "CPU_TEMPERATURE_TRESHOLD" environment variable with "CPU_TEMPERATURE_T<ins>H</ins>RESHOLD" which was a typo
 
 # Dell iDRAC fan controller Docker image
 Download Docker image from :
 - [Docker Hub](https://hub.docker.com/r/tigerblue77/dell_idrac_fan_controller)
 - [GitHub Containers Repository](https://github.com/tigerblue77/Dell_iDRAC_fan_controller_Docker/pkgs/container/dell_idrac_fan_controller)
 
-<!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
   <ol>
@@ -22,11 +21,8 @@ Download Docker image from :
 
 ## Container console log example
 
-![image](https://user-images.githubusercontent.com/37409593/216442212-d2ad7ff7-0d6f-443f-b8ac-c67b5f613b83.png)
+<!-- @todo -->
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- PREREQUISITES -->
 ## Prerequisites
 ### iDRAC version
 
@@ -36,15 +32,13 @@ This Docker container only works on Dell PowerEdge servers that support IPMI com
 
 1. Log into your iDRAC web console
 
-![001](https://user-images.githubusercontent.com/37409593/210168273-7d760e47-143e-4a6e-aca7-45b483024139.png)
+![001](https://github.com/user-attachments/assets/9855dcd2-5e27-4df8-8760-0e863f76c29a)
 
-2. In the left side menu, expand "iDRAC settings", click "Network" then click "IPMI Settings" link at the top of the web page.
-
-![002](https://user-images.githubusercontent.com/37409593/210168249-994f29cc-ac9e-4667-84f7-07f6d9a87522.png)
+2. In the left side menu, expand "iDRAC settings", click "Network".
 
 3. Check the "Enable IPMI over LAN" checkbox then click "Apply" button.
 
-![003](https://user-images.githubusercontent.com/37409593/210168248-a68982c4-9fe7-40e7-8b2c-b3f06fbfee62.png)
+![002](https://github.com/user-attachments/assets/b02fc640-42a3-484c-8e55-9d4714d986dc)
 
 4. Test access to IPMI over LAN running the following commands :
 ```bash
@@ -58,110 +52,62 @@ ipmitool -I lanplus \
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- SUPPORTED ARCHITECTURES -->
 ## Supported architectures
 
-This Docker container is currently built and available for the following CPU architectures :
+This Docker container is currently built and available for the following CPU architectures:
 - AMD64
 - ARM64
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- USAGE -->
 ## Usage
+### Available Environment Variables
 
-1. with local iDRAC:
+| Environment Variable | Default Value | Description |
+|---------------------|---------------|-------------|
+| `IDRAC_HOST` | `local` | iDRAC host address. Use `local` for direct IPMI access or an IP address for network access |
+| `IDRAC_USERNAME` | `root` | iDRAC username for authentication when using network access |
+| `IDRAC_PASSWORD` | `calvin` | iDRAC password for authentication when using network access |
+| `FAN_SPEED` | `5` | Target fan speed percentage when using custom profile (1-100) |
+| `CPU_TEMPERATURE_THRESHOLD` | `50` | Temperature threshold in °C that triggers fallback to Dell's dynamic fan control |
+| `CHECK_INTERVAL` | `60` | Time in seconds between temperature checks |
+| `DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE` | `false` | Whether to disable Dell's default cooling response for third-party PCIe cards (Gen 13 and older only) |
+| `KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT` | `false` | Whether to maintain the PCIe cooling response state when container exits |
 
+### Example Usage:
+
+```yaml
+environment:
+  - IDRAC_HOST=192.168.1.100
+  - IDRAC_USERNAME=root
+  - IDRAC_PASSWORD=your_password
+  - FAN_SPEED=20
+  - CPU_TEMPERATURE_THRESHOLD=60
+  - CHECK_INTERVAL=30
+```
+
+#### `docker run`
 ```bash
 docker run -d \
-  --name Dell_iDRAC_fan_controller \
-  --restart=unless-stopped \
-  -e IDRAC_HOST=local \
-  -e FAN_SPEED=<decimal or hexadecimal fan speed> \
-  -e CPU_TEMPERATURE_THRESHOLD=<decimal temperature threshold> \
-  -e CHECK_INTERVAL=<seconds between each check> \
-  -e DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE=<true or false> \
-  -e KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT=<true or false> \
-  --device=/dev/ipmi0:/dev/ipmi0:rw \
-  tigerblue77/dell_idrac_fan_controller:latest
+  --device /dev/ipmi0:/dev/ipmi0:rw \
+  --name idrac-controller \
+  -e FAN_SPEED=5 \
+  -e CPU_TEMPERATURE_THRESHOLD=50 \
+  dhazelett/idrac-controller:latest
 ```
 
-2. with LAN iDRAC:
-
-```bash
-docker run -d \
-  --name Dell_iDRAC_fan_controller \
-  --restart=unless-stopped \
-  -e IDRAC_HOST=<iDRAC IP address> \
-  -e IDRAC_USERNAME=<iDRAC username> \
-  -e IDRAC_PASSWORD=<iDRAC password> \
-  -e FAN_SPEED=<decimal or hexadecimal fan speed> \
-  -e CPU_TEMPERATURE_THRESHOLD=<decimal temperature threshold> \
-  -e CHECK_INTERVAL=<seconds between each check> \
-  -e DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE=<true or false> \
-  -e KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT=<true or false> \
-  tigerblue77/dell_idrac_fan_controller:latest
-```
-
-`docker-compose.yml` examples:
-
-1. to use with local iDRAC:
-
+#### `docker-compose`
 ```yml
-version: '3.8'
-
 services:
-  Dell_iDRAC_fan_controller:
-    image: tigerblue77/dell_idrac_fan_controller:latest
-    container_name: Dell_iDRAC_fan_controller
-    restart: unless-stopped
-    environment:
-      - IDRAC_HOST=local
-      - FAN_SPEED=<decimal or hexadecimal fan speed>
-      - CPU_TEMPERATURE_THRESHOLD=<decimal temperature threshold>
-      - CHECK_INTERVAL=<seconds between each check>
-      - DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE=<true or false>
-      - KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT=<true or false>
-    devices:
-      - /dev/ipmi0:/dev/ipmi0:rw
+    idrac-controller:
+        image: dhazelett/idrac-controller:latest
+        container_name: idrac-controller
+        environment:
+            - FAN_SPEED=5
+            - CPU_TEMPERATURE_THRESHOLD=50
+        devices:
+            - /dev/ipmi0:/dev/ipmi0:rw
 ```
-
-2. to use with LAN iDRAC:
-
-```yml
-version: '3.8'
-
-services:
-  Dell_iDRAC_fan_controller:
-    image: tigerblue77/dell_idrac_fan_controller:latest
-    container_name: Dell_iDRAC_fan_controller
-    restart: unless-stopped
-    environment:
-      - IDRAC_HOST=<iDRAC IP address>
-      - IDRAC_USERNAME=<iDRAC username>
-      - IDRAC_PASSWORD=<iDRAC password>
-      - FAN_SPEED=<decimal or hexadecimal fan speed>
-      - CPU_TEMPERATURE_THRESHOLD=<decimal temperature threshold>
-      - CHECK_INTERVAL=<seconds between each check>
-      - DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE=<true or false>
-      - KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT=<true or false>
-```
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- PARAMETERS -->
-## Parameters
-
-All parameters are optional as they have default values (including default iDRAC username and password).
-
-- `IDRAC_HOST` parameter can be set to "local" or to your distant iDRAC's IP address. **Default** value is "local".
-- `IDRAC_USERNAME` parameter is only necessary if you're adressing a distant iDRAC. **Default** value is "root".
-- `IDRAC_PASSWORD` parameter is only necessary if you're adressing a distant iDRAC. **Default** value is "calvin".
-- `FAN_SPEED` parameter can be set as a decimal (from 0 to 100%) or hexadecimaladecimal value (from 0x00 to 0x64) you want to set the fans to. **Default** value is 5(%).
-- `CPU_TEMPERATURE_THRESHOLD` parameter is the T°junction (junction temperature) threshold beyond which the Dell fan mode defined in your BIOS will become active again (to protect the server hardware against overheat). **Default** value is 50(°C).
-- `CHECK_INTERVAL` parameter is the time (in seconds) between each temperature check and potential profile change. **Default** value is 60(s).
-- `DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE` parameter is a boolean that allows to disable third-party PCIe card Dell default cooling response. **Default** value is false.
-- `KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT` parameter is a boolean that allows to keep the third-party PCIe card Dell default cooling response state upon exit. **Default** value is false, so that it resets the third-party PCIe card Dell default cooling response to Dell default.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

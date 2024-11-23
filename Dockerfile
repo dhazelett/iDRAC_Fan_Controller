@@ -1,30 +1,27 @@
-FROM ubuntu:latest
+FROM python:3.12-alpine
 
-LABEL org.opencontainers.image.authors="tigerblue77"
+LABEL org.opencontainers.image.authors="dhazelett"
 
-RUN apt-get update
-
-RUN apt-get install ipmitool -y
-
-ADD functions.sh /app/functions.sh
-ADD healthcheck.sh /app/healthcheck.sh
-ADD Dell_iDRAC_fan_controller.sh /app/Dell_iDRAC_fan_controller.sh
-
-RUN chmod 0777 /app/functions.sh /app/healthcheck.sh /app/Dell_iDRAC_fan_controller.sh
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    linux-headers \
+    ipmitool
 
 WORKDIR /app
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "/app/healthcheck.sh" ]
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# you should override these default values when running. See README.md
-# ENV IDRAC_HOST 192.168.1.100
-ENV IDRAC_HOST local
-# ENV IDRAC_USERNAME root
-# ENV IDRAC_PASSWORD calvin
-ENV FAN_SPEED 5
-ENV CPU_TEMPERATURE_THRESHOLD 50
-ENV CHECK_INTERVAL 60
-ENV DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE false
-ENV KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT false
+COPY . .
 
-CMD ["./Dell_iDRAC_fan_controller.sh"]
+ENV IDRAC_HOST=local \
+    FAN_SPEED=5 \
+    CPU_TEMPERATURE_THRESHOLD=50 \
+    CHECK_INTERVAL=60 \
+    DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE=false \
+    KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT=false
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "python", "healthcheck.py" ]
+
+CMD ["python", "idrac_controller.py"]
