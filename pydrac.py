@@ -7,9 +7,6 @@ from datetime import datetime
 from typing import Optional
 import re
 
-import pyipmi
-import pyipmi.interfaces
-
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
