@@ -1,11 +1,11 @@
 <div id="top"></div>
-This version of the container uses python to control ipmi, via `python-ipmi`.
+This version of the container uses python to control ipmi.
 
 
 # Dell iDRAC fan controller Docker image
 Download Docker image from :
-- [Docker Hub](https://hub.docker.com/r/tigerblue77/dell_idrac_fan_controller)
-- [GitHub Containers Repository](https://github.com/tigerblue77/Dell_iDRAC_fan_controller_Docker/pkgs/container/dell_idrac_fan_controller)
+- [Docker Hub](https://hub.docker.com/r/dhazelett/idrac_fan_controller)
+- [GitHub Containers Repository](https://github.com/dhazelett/iDRAC_Fan_Controller/pkgs/container/idrac_fan_controller)
 
 <details>
   <summary>Table of Contents</summary>
@@ -13,7 +13,6 @@ Download Docker image from :
     <li><a href="#container-console-log-example">Container console log example</a></li>
     <li><a href="#supported-architectures">Supported architectures</a></li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#parameters">Parameters</a></li>
     <li><a href="#troubleshooting">Troubleshooting</a></li>
     <li><a href="#contributing">Contributing</a></li>
   </ol>
@@ -21,7 +20,7 @@ Download Docker image from :
 
 ## Container console log example
 
-<!-- @todo -->
+![image](https://github.com/user-attachments/assets/beba33c0-c1db-4216-a181-48fe0492a79a)
 
 ## Prerequisites
 ### iDRAC version
@@ -68,11 +67,21 @@ This Docker container is currently built and available for the following CPU arc
 | `IDRAC_HOST` | `local` | iDRAC host address. Use `local` for direct IPMI access or an IP address for network access |
 | `IDRAC_USERNAME` | `root` | iDRAC username for authentication when using network access |
 | `IDRAC_PASSWORD` | `calvin` | iDRAC password for authentication when using network access |
-| `FAN_SPEED` | `5` | Target fan speed percentage when using custom profile (1-100) |
-| `CPU_TEMPERATURE_THRESHOLD` | `50` | Temperature threshold in °C that triggers fallback to Dell's dynamic fan control |
-| `CHECK_INTERVAL` | `60` | Time in seconds between temperature checks |
+| `FAN_SPEED` | `25` | Target fan speed percentage when using custom profile (1-100) |
+| `FAN_SPEED_MAX` | `100` | Maximum fan speed percentage to use when CPU temperature exceeds threshold |
+| `CPU_TEMPERATURE_THRESHOLD` | `60` | Temperature threshold in °C that triggers higher fan speeds |
+| `CHECK_INTERVAL` | `15` | Time in seconds between ipmi probes |
+| `FAN_RPM_MIN` | `2500` | Minimum expected RPM for fans |
+| `FAN_RPM_MAX` | `12000` | Maximum expected RPM for fans |
 | `DISABLE_THIRD_PARTY_PCIE_CARD_DELL_DEFAULT_COOLING_RESPONSE` | `false` | Whether to disable Dell's default cooling response for third-party PCIe cards (Gen 13 and older only) |
-| `KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT` | `false` | Whether to maintain the PCIe cooling response state when container exits |
+| `KEEP_THIRD_PARTY_PCIE_CARD_COOLING_RESPONSE_STATE_ON_EXIT` | `false` | Whether to maintain the PCIe cooling response state when process exits |
+| `CALIBRATE_FANS` | `false` | Whether to perform fan calibration at startup to determine actual min/max RPM ranges |
+| `ENABLE_DEBUG_OUTPUT` | `false` | Enable additional debug output for troubleshooting |
+| `ENABLE_DYNAMIC_UPDATES` | `true` | You can set this to false if you just want your system to always run at x% while the container is running. |
+| `JUNCTION_OFFSET` | `15` | Temperature difference (°C) between CPU package and junction temperatures |
+
+> note that the min and max fan rpm settings are just for calculating your current %
+
 
 ### Example Usage:
 
